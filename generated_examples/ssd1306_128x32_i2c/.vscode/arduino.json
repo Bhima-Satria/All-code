@@ -1,0 +1,6 @@
+{
+    "sketch": "ssd1306_128x32_i2c.ino",
+    "port": "COM1",
+    "board": null,
+    "configuration": null
+}

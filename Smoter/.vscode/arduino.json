@@ -1,0 +1,5 @@
+{
+    "configuration": "cpu=attiny25,clock=internal1",
+    "board": "attiny:avr:ATtinyX5",
+    "sketch": "Smoter.ino"
+}

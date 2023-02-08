@@ -1,0 +1,11 @@
+#line 1 "e:\\document\\Program Arduino\\jamur-device\\settings.json"
+{
+    "files.associations": {
+        "array": "cpp",
+        "deque": "cpp",
+        "string": "cpp",
+        "unordered_map": "cpp",
+        "vector": "cpp",
+        "initializer_list": "cpp"
+    }
+}

@@ -1,0 +1,377 @@
+#include <SPI.h>
+#include <Ethernet.h>
+#include <EEPROM.h>
+#include <DS3231.h>
+
+// EPORPORASI
+byte mac[]= {0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED};
+
+int IPa =0;
+int IPb =1;
+int IPc =2;
+int IPd =3;
+
+int a;
+int b;
+int c;
+int d;
+
+int Simpan_ID=5; //Untuk Alamat 5-11
+int Simpan_Tgl=12; //Untuk Tgl 12-18
+int Simpan_Jam=19; //Untuk Jam 19-30
+int Simpan_Rp=31; // Untuk Rp 31-40
+int Simpan_Pj=41; // Untuk Pajak 41-66
+
+String tgl;
+String jam;
+String Rp;
+String ID;
+char ID_Alat [10];
+
+//RTC
+int Jam1;
+int Menit1;
+int Detik1;
+
+//SIM 800L
+String apn = "internet";                //APN
+String apn_u = "";                     //APN-Username
+String apn_p = "";                     //APN-Password
+//String url = "http://siprida.databumi.id/etax/Api/getPorporasi.php?";  //URL for HTTP-POST-REQUEST
+String url = "elektro.um.ac.id/research/smartgarden/submit.php?";
+
+//Indikator
+int Led_Data = 3;
+int Led_Lan  = 4;
+int Led_Pwr  = 5;
+
+// Tanggal+Jam+Rp+ID-Alat
+
+String commandStr;
+
+EthernetServer server(80); //Miso Mosi Clk Ss menyesuaikan Arduino
+DS3231 rtc(SDA, SCL); //Kaki SDA=20 SCL=21
+
+void SimpanEEPROMChar(char *p, int adr);
+
+void setup() {
+
+  pinMode(Led_Data, OUTPUT);
+  pinMode(Led_Lan, OUTPUT);
+  pinMode(Led_Pwr, OUTPUT);
+
+  digitalWrite(Led_Pwr, LOW);
+  digitalWrite(Led_Data, HIGH);
+  digitalWrite(Led_Lan, HIGH);
+
+  //SIM800L
+  Serial1.begin(9600); // Kaki Rx=19 Tx=18 crosh With Sim800l TX=RX / RX=TX
+  Serial.begin(9600);
+  rtc.begin();
+  
+  delay(1000);
+  Serial.println("SIM800 Start....");
+
+ a=EEPROM.read(IPa);
+ b=EEPROM.read(IPb);
+ c=EEPROM.read(IPc);
+ d=EEPROM.read(IPd);
+ 
+  IPAddress ip(a,b,c,d);
+  
+  Ethernet.begin(mac,ip);
+  server.begin();
+  Serial.print("Server is at : ");
+  Serial.println(Ethernet.localIP());
+  delay(1000);
+  
+  //Inisialisasi SIM800L
+  server.write("Wait a minute...");
+  
+  Serial1.println("AT");
+  runsl();//Print GSM Status an the Serial Output;
+  delay(4000);
+  Serial1.println("AT+SAPBR=3,1,Contype,GPRS");
+  runsl();
+  delay(100);
+  Serial1.println("AT+SAPBR=3,1,APN," + apn);
+  runsl();
+  delay(100);
+  //  Serial1.println("AT+SAPBR=3,1,USER," + apn_u); //Comment out, if you need username
+  runsl();
+  delay(100);
+  //  Serial1.println("AT+SAPBR=3,1,PWD," + apn_p); //Comment out, if you need password
+  runsl();
+  delay(100);
+  Serial1.println("AT+SAPBR =1,1");
+  runsl();
+  delay(100);
+  Serial1.println("AT+SAPBR=2,1");
+  runsl();
+  delay(2000);
+  server.write("Done...");
+}
+
+void loop() {
+  EthernetClient client = server.available();
+  if (client.available()>0){
+    char c = client.read();
+       
+    if (c != '\n'){
+      commandStr += c;
+    }
+    else {
+      Serial.println("Command:" + commandStr + '\n' + "Length:"  + commandStr.length());
+      processCommand(commandStr);
+      commandStr="";
+    }
+  }
+
+}
+
+void processCommand(String cmd) {
+  
+  //Request Stempel E-Stamp 
+  if (cmd.substring(0,2) =="90") {
+   digitalWrite(Led_Lan, LOW);
+   delay(100);
+   digitalWrite(Led_Lan, HIGH);
+   
+   server.write("E-Stamp : ");
+   tgl  = cmd.substring(3,11);
+   jam  = cmd.substring(12,18);
+   Rp   = cmd.substring(19,28);
+   
+  Serial.print(tgl + '\t');
+  Serial.print(jam + '\t');
+  Serial.println(Rp + '\t');
+  
+   char E_Tanggal [10]; //Asli 8 Char
+   char E_Jam [10]; //Asli 6 Char
+   char E_Rp [15]; // Asli 9 Char
+   
+   //Simpan Tanggal
+   tgl.toCharArray(E_Tanggal, 15);
+   SimpanEEPROMChar(E_Tanggal, Simpan_Tgl);
+    server.write(EEPROM.read(Simpan_Tgl));
+    server.write(EEPROM.read(Simpan_Tgl+random(0,7)));
+    server.write(EEPROM.read(Simpan_Tgl+random(0,7)));
+    server.write(EEPROM.read(Simpan_Tgl+random(0,7)));
+    server.write(EEPROM.read(Simpan_Tgl+random(0,7)));
+    server.write(EEPROM.read(Simpan_Tgl+random(0,7)));
+    server.write(EEPROM.read(Simpan_Tgl+random(0,7)));
+    server.write(EEPROM.read(Simpan_Tgl+random(0,7)));
+    server.write(EEPROM.read(Simpan_Tgl+random(0,7)));
+    
+   //Simpan Jam
+   jam.toCharArray(E_Jam, 10);
+   SimpanEEPROMChar(E_Jam, Simpan_Jam);
+    server.write(EEPROM.read(Simpan_Jam));
+    server.write(EEPROM.read(Simpan_Jam+random(0,5)));
+    server.write(EEPROM.read(Simpan_Jam+random(0,5)));
+    server.write(EEPROM.read(Simpan_Jam+random(0,5)));
+    server.write(EEPROM.read(Simpan_Jam+random(0,5)));
+    server.write(EEPROM.read(Simpan_Jam+random(0,5)));
+    
+   //Simpan Rp
+   Rp.toCharArray(E_Rp, 15);
+   SimpanEEPROMChar(E_Rp, Simpan_Rp);
+    server.write(EEPROM.read(Simpan_Rp));
+    server.write(EEPROM.read(Simpan_Rp+random(0,8)));
+    server.write(EEPROM.read(Simpan_Rp+random(0,8)));
+    server.write(EEPROM.read(Simpan_Rp+random(0,8)));
+    server.write(EEPROM.read(Simpan_Rp+random(0,8)));
+    server.write(EEPROM.read(Simpan_Rp+random(0,8)));
+    server.write(EEPROM.read(Simpan_Rp+random(0,8)));
+    server.write(EEPROM.read(Simpan_Rp+random(0,8)));
+    server.write(EEPROM.read(Simpan_Rp+random(0,8)));
+    server.write(EEPROM.read(Simpan_Rp+random(0,8)));
+
+   //ID Alat
+    server.write(EEPROM.read(Simpan_ID));
+    server.write(EEPROM.read(Simpan_ID+1));
+    server.write(EEPROM.read(Simpan_ID+2));
+    server.write(EEPROM.read(Simpan_ID+3));
+    server.write(EEPROM.read(Simpan_ID+4));
+    server.write(EEPROM.read(Simpan_ID+5));
+    server.write(EEPROM.read(Simpan_ID+6));
+
+    //Kirim Data Server
+    digitalWrite(Led_Data, LOW);
+    gsm_sendhttp();
+    delay(1000);
+    server.write(";90;Send OK");
+    digitalWrite(Led_Data, HIGH);
+  }
+
+  //Baca + Ganti ID Pajak
+  else if (cmd.substring(0,2)=="91") {
+   digitalWrite(Led_Lan, LOW);
+   delay(100);
+   digitalWrite(Led_Lan, HIGH);
+   
+    server.write("ID_pajak : ");
+    if (cmd.length() == 2 ) {
+      for (int x=0; x<=25 ;x++){
+      server.write(EEPROM.read(Simpan_Pj+x));
+      }
+    } else {
+    String Pj = cmd.substring(3,28);
+    char ID_Pajak [30];
+    Pj.toCharArray(ID_Pajak, 30);
+    SimpanEEPROMChar(ID_Pajak, Simpan_Pj);      
+    }
+     server.write(";91,OK");
+  }
+
+  //Baca+Ganti ID Alat
+  else if (cmd.substring(0,2)=="92") {
+   digitalWrite(Led_Lan, LOW);
+   delay(100);
+   digitalWrite(Led_Lan, HIGH);
+   
+    server.write("ID_Alat :");
+    if (cmd.length() == 2 ) {
+      for (int z=0; z<=6 ; z++){
+       server.write(EEPROM.read(Simpan_ID+z));
+      }
+    } else {
+    ID = cmd.substring(3,10);
+    ID.toCharArray(ID_Alat, 10);
+    SimpanEEPROMChar(ID_Alat, Simpan_ID);
+      for (int z=0; z<=6 ; z++){
+       server.write(EEPROM.read(Simpan_ID+z));
+      }
+    }
+    server.write(";92,OK");
+  }
+
+  //Baca RTC
+  else if (cmd.substring(0,2) =="93") {
+   digitalWrite(Led_Lan, LOW);
+   delay(100);
+   digitalWrite(Led_Lan, HIGH);
+   
+    if (cmd.length() == 2) {
+    server.write("Jam :");
+    server.write(rtc.getTimeStr());
+    server.write(";93,OK");
+    } else {
+      String Jam_RTC    = cmd.substring(3,5);
+      String Menit_RTC  = cmd.substring(6,8);
+      String Detik_RTC  = cmd.substring(9,11);
+       Jam1    = Jam_RTC.toInt();
+       Menit1  = Menit_RTC.toInt();
+       Detik1  = Detik_RTC.toInt();
+      rtc.setTime(Jam1, Menit1, Detik1);
+      server.write(rtc.getTimeStr());
+      server.write(";93,Update,OK");
+    }
+  }
+
+  //Atur Alamat IP
+  else if (cmd.substring(0,2) =="94") {
+   digitalWrite(Led_Lan, LOW);
+   delay(100);
+   digitalWrite(Led_Lan, HIGH);
+   
+    server.write("Set_IP");
+    String f = cmd.substring(3,6);
+    String g = cmd.substring(7,10);
+    String h = cmd.substring(11,14);
+    String i = cmd.substring(15,18);
+
+    a=f.toInt();
+    b=g.toInt();
+    c=h.toInt();
+    d=i.toInt();
+    
+    Serial.print("New IP: " + String(a) + ".");
+    Serial.print(String(b)+".");
+    Serial.print(String(c)+".");
+    Serial.print(String(d));
+    
+    EEPROM.write(IPa, a);
+    EEPROM.write(IPb, b);
+    EEPROM.write(IPc, c);
+    EEPROM.write(IPd, d);
+    delay(1000);
+    server.write(";94,OK");
+  }
+}
+
+
+void gsm_sendhttp() {
+
+char Kirim_ID;
+
+      for (int y=0; y<=6 ; y++){
+       Kirim_ID = EEPROM.read(Simpan_ID+y);
+      }
+  
+  Serial1.println("AT");
+  runsl();//Print GSM Status an the Serial Output;
+  delay(4000);
+  Serial1.println("AT+SAPBR=3,1,Contype,GPRS");
+  runsl();
+  delay(100);
+  Serial1.println("AT+SAPBR=3,1,APN," + apn);
+  runsl();
+  delay(100);
+  //  Serial1.println("AT+SAPBR=3,1,USER," + apn_u); //Comment out, if you need username
+  runsl();
+  delay(100);
+  //  Serial1.println("AT+SAPBR=3,1,PWD," + apn_p); //Comment out, if you need password
+  runsl();
+  delay(100);
+  Serial1.println("AT+SAPBR =1,1");
+  runsl();
+  delay(100);
+  Serial1.println("AT+SAPBR=2,1");
+  runsl();
+  delay(2000);
+  Serial1.println("AT+HTTPINIT");
+  runsl();
+  delay(100);
+  Serial1.println("AT+HTTPPARA=CID,1");
+  runsl();
+  delay(100);
+  Serial1.println("AT+HTTPPARA=URL," + url + "Suhu=" + String(Kirim_ID) + "&Kelembaban=" + Rp +"&FLC=" + jam );
+  runsl();
+  delay(100);
+  Serial1.println("AT+HTTPPARA=CONTENT,application/x-www-form-urlencoded");
+  runsl();
+  delay(100);
+  Serial1.println("AT+HTTPDATA=192,10000");
+  runsl();
+  delay(10000);
+  Serial1.println("AT+HTTPACTION=1");
+  runsl();
+  delay(5000);
+  Serial1.println("AT+HTTPREAD");
+  runsl();
+  delay(100);
+  Serial1.println("AT+HTTPTERM");
+  runsl();
+}
+
+
+void SimpanEEPROMChar(char *p, int adr){
+  char Dt;
+  for (int i=0; i<26; i++){
+   Dt=*p;
+   if (Dt==0){
+    break;
+   } 
+   EEPROM.write(adr, Dt);
+   p++;
+   adr++;
+  }
+}
+
+
+void runsl() {
+  while (Serial1.available()) {
+    Serial.write(Serial1.read());
+  }
+}

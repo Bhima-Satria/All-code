@@ -1,0 +1,61 @@
+<pre>
+<font color="#5e6d03">#include</font> <font color="#434f54">&lt;</font><font color="#5e6d03">ESP8266HTTPClient</font><font color="#434f54">.</font><font color="#000000">h</font><font color="#434f54">&gt;</font>
+<font color="#5e6d03">#include</font> <font color="#434f54">&lt;</font><font color="#d35400">ESP8266WiFi</font><font color="#434f54">.</font><font color="#000000">h</font><font color="#434f54">&gt;</font>
+
+<font color="#00979c">int</font> <font color="#000000">Id</font><font color="#000000">;</font>
+<font color="#00979c">int</font> <font color="#000000">Suhu</font><font color="#000000">;</font>
+<font color="#00979c">int</font> <font color="#000000">Udara</font><font color="#000000">;</font>
+<font color="#00979c">int</font> <font color="#000000">Tanah</font><font color="#000000">;</font>
+
+<font color="#00979c">void</font> <font color="#5e6d03">setup</font><font color="#000000">(</font><font color="#000000">)</font> <font color="#000000">{</font>
+
+ &nbsp;<b><font color="#d35400">Serial</font></b><font color="#434f54">.</font><font color="#d35400">begin</font><font color="#000000">(</font><font color="#000000">115200</font><font color="#000000">)</font><font color="#000000">;</font>
+ &nbsp;<b><font color="#d35400">WiFi</font></b><font color="#434f54">.</font><font color="#d35400">begin</font><font color="#000000">(</font><font color="#005c5f">&#34;Workshop_Batujajar&#34;</font><font color="#434f54">,</font> <font color="#005c5f">&#34;Workshop2020&#34;</font><font color="#000000">)</font><font color="#000000">;</font> &nbsp;&nbsp;<font color="#434f54">&#47;&#47;WiFi connection</font>
+
+ &nbsp;<font color="#5e6d03">while</font> <font color="#000000">(</font><b><font color="#d35400">WiFi</font></b><font color="#434f54">.</font><font color="#d35400">status</font><font color="#000000">(</font><font color="#000000">)</font> <font color="#434f54">!=</font> <font color="#000000">WL_CONNECTED</font><font color="#000000">)</font> <font color="#000000">{</font> &nbsp;<font color="#434f54">&#47;&#47;Wait for the WiFI connection completion</font>
+
+ &nbsp;&nbsp;&nbsp;<font color="#d35400">delay</font><font color="#000000">(</font><font color="#000000">500</font><font color="#000000">)</font><font color="#000000">;</font>
+ &nbsp;&nbsp;&nbsp;<b><font color="#d35400">Serial</font></b><font color="#434f54">.</font><font color="#d35400">println</font><font color="#000000">(</font><font color="#005c5f">&#34;Waiting for connection&#34;</font><font color="#000000">)</font><font color="#000000">;</font>
+
+ &nbsp;<font color="#000000">}</font>
+
+<font color="#000000">}</font>
+
+<font color="#00979c">void</font> <font color="#5e6d03">loop</font><font color="#000000">(</font><font color="#000000">)</font> <font color="#000000">{</font>
+
+ &nbsp;<font color="#5e6d03">if</font> <font color="#000000">(</font><b><font color="#d35400">WiFi</font></b><font color="#434f54">.</font><font color="#d35400">status</font><font color="#000000">(</font><font color="#000000">)</font> <font color="#434f54">==</font> <font color="#000000">WL_CONNECTED</font><font color="#000000">)</font> <font color="#000000">{</font> <font color="#434f54">&#47;&#47;Check WiFi connection status</font>
+ &nbsp;&nbsp;&nbsp;<b><font color="#d35400">HTTPClient</font></b> <font color="#000000">http</font><font color="#000000">;</font> &nbsp;&nbsp;&nbsp;<font color="#434f54">&#47;&#47;Declare object of class HTTPClient</font>
+
+ &nbsp;&nbsp;&nbsp;<font color="#5e6d03">for</font> <font color="#000000">(</font><font color="#00979c">int</font> <font color="#000000">x</font> <font color="#434f54">=</font> <font color="#000000">1</font><font color="#000000">;</font> <font color="#000000">x</font> <font color="#434f54">&lt;</font> <font color="#000000">5</font><font color="#000000">;</font> <font color="#000000">x</font><font color="#434f54">++</font><font color="#000000">)</font> <font color="#000000">{</font>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<font color="#000000">Id</font> &nbsp;&nbsp;&nbsp;<font color="#434f54">=</font> <font color="#000000">x</font><font color="#000000">;</font>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<font color="#000000">Suhu</font> &nbsp;<font color="#434f54">=</font> <font color="#d35400">random</font><font color="#000000">(</font><font color="#000000">20</font><font color="#434f54">,</font> <font color="#000000">30</font><font color="#000000">)</font><font color="#000000">;</font>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<font color="#000000">Udara</font> <font color="#434f54">=</font> <font color="#d35400">random</font><font color="#000000">(</font><font color="#000000">50</font><font color="#434f54">,</font> <font color="#000000">90</font><font color="#000000">)</font><font color="#000000">;</font>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<font color="#000000">Tanah</font> <font color="#434f54">=</font> <font color="#d35400">random</font><font color="#000000">(</font><font color="#000000">50</font><font color="#434f54">,</font> <font color="#000000">90</font><font color="#000000">)</font><font color="#000000">;</font>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<font color="#00979c">int</font> <font color="#000000">Prediksi</font> <font color="#434f54">=</font> <font color="#d35400">random</font> <font color="#000000">(</font><font color="#000000">50</font><font color="#434f54">,</font> <font color="#000000">100</font><font color="#000000">)</font><font color="#000000">;</font>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<font color="#000000">http</font><font color="#434f54">.</font><font color="#d35400">addHeader</font><font color="#000000">(</font><font color="#005c5f">&#34;Content-Type&#34;</font><font color="#434f54">,</font> <font color="#005c5f">&#34;text&#47;plain&#34;</font><font color="#000000">)</font><font color="#000000">;</font> &nbsp;<font color="#434f54">&#47;&#47;Specify content-type header</font>
+
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<font color="#434f54">&#47;&#47; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;String postStr = &#34;</font><u><font color="#434f54">http:&#47;&#47;192.168.1.6&#47;iot&#47;submitwsn.php?Id</font></u><font color="#434f54">=&#34; + String(Id) + &#34;&amp;Suhu=&#34; + String(Suhu) + &#34;&amp;Udara=&#34; + String(Udara) + &#34;&amp;Tanah=&#34; + String(Tanah);</font>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<font color="#00979c">String</font> <font color="#000000">postStr</font> <font color="#434f54">=</font> <font color="#005c5f">&#34;http:&#47;&#47;192.168.1.6&#47;iot&#47;submit.php?Suhu=&#34;</font> <font color="#434f54">+</font> <font color="#00979c">String</font><font color="#000000">(</font><font color="#000000">Suhu</font><font color="#000000">)</font> <font color="#434f54">+</font> <font color="#005c5f">&#34;&amp;Kelembaban=&#34;</font> <font color="#434f54">+</font> <font color="#00979c">String</font><font color="#000000">(</font><font color="#000000">Udara</font><font color="#000000">)</font> <font color="#434f54">+</font> <font color="#005c5f">&#34;&amp;KelembabanT=&#34;</font> <font color="#434f54">+</font> <font color="#00979c">String</font><font color="#000000">(</font><font color="#000000">Tanah</font><font color="#000000">)</font> <font color="#434f54">+</font> <font color="#005c5f">&#34;&amp;Prediksi=&#34;</font> <font color="#434f54">+</font> <font color="#00979c">String</font><font color="#000000">(</font><font color="#000000">Prediksi</font><font color="#000000">)</font><font color="#000000">;</font>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<font color="#000000">http</font><font color="#434f54">.</font><font color="#d35400">begin</font><font color="#000000">(</font><font color="#000000">postStr</font><font color="#000000">)</font><font color="#000000">;</font> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<font color="#434f54">&#47;&#47;Specify request destination</font>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<font color="#00979c">int</font> <font color="#000000">httpCode</font> <font color="#434f54">=</font> <font color="#000000">http</font><font color="#434f54">.</font><font color="#d35400">POST</font><font color="#000000">(</font><font color="#000000">postStr</font><font color="#000000">)</font><font color="#000000">;</font> &nbsp;&nbsp;<font color="#434f54">&#47;&#47;Send the request</font>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<font color="#00979c">String</font> <font color="#000000">payload</font> <font color="#434f54">=</font> <font color="#000000">http</font><font color="#434f54">.</font><font color="#d35400">getString</font><font color="#000000">(</font><font color="#000000">)</font><font color="#000000">;</font> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<font color="#434f54">&#47;&#47;Get the response payload</font>
+
+
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b><font color="#d35400">Serial</font></b><font color="#434f54">.</font><font color="#d35400">println</font><font color="#000000">(</font><font color="#005c5f">&#34;Data Alat Terkirim&#34;</font><font color="#000000">)</font><font color="#000000">;</font>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<font color="#434f54">&#47;&#47; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Serial.printf(&#34;ID Alat= %d; Suhu= %d; Udara= %d; Tanah= %d; &#34;, Id, Suhu, Udara, Tanah);</font>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b><font color="#d35400">Serial</font></b><font color="#434f54">.</font><font color="#d35400">printf</font><font color="#000000">(</font><font color="#005c5f">&#34;Prediksi= %d; Suhu= %d; Udara= %d; Tanah= %d; &#34;</font><font color="#434f54">,</font> <font color="#000000">Prediksi</font><font color="#434f54">,</font> <font color="#000000">Suhu</font><font color="#434f54">,</font> <font color="#000000">Udara</font><font color="#434f54">,</font> <font color="#000000">Tanah</font><font color="#000000">)</font><font color="#000000">;</font>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b><font color="#d35400">Serial</font></b><font color="#434f54">.</font><font color="#d35400">println</font><font color="#000000">(</font><font color="#000000">httpCode</font><font color="#000000">)</font><font color="#000000">;</font> &nbsp;&nbsp;<font color="#434f54">&#47;&#47;Print HTTP return code</font>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<font color="#434f54">&#47;&#47; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Serial.println(payload);</font>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<font color="#000000">http</font><font color="#434f54">.</font><font color="#d35400">end</font><font color="#000000">(</font><font color="#000000">)</font><font color="#000000">;</font>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<font color="#d35400">delay</font><font color="#000000">(</font><font color="#000000">10000</font><font color="#000000">)</font><font color="#000000">;</font>
+ &nbsp;&nbsp;&nbsp;<font color="#000000">}</font>
+
+ &nbsp;<font color="#000000">}</font> <font color="#5e6d03">else</font> <font color="#000000">{</font>
+
+ &nbsp;&nbsp;&nbsp;<b><font color="#d35400">Serial</font></b><font color="#434f54">.</font><font color="#d35400">println</font><font color="#000000">(</font><font color="#005c5f">&#34;Error in WiFi connection&#34;</font><font color="#000000">)</font><font color="#000000">;</font>
+
+ &nbsp;<font color="#000000">}</font>
+
+<font color="#000000">}</font>
+
+</pre>

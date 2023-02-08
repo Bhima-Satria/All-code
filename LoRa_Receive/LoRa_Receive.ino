@@ -1,0 +1,136 @@
+#include <SPI.h>
+#include <LoRa.h>
+
+//Libraries for OLED Display
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+#include "BluetoothSerial.h"
+
+BluetoothSerial SerialBT;
+
+//define the pins used by the LoRa transceiver module
+#define SCK 5
+#define MISO 19
+#define MOSI 27
+#define SS 18
+#define RST 14
+#define DIO0 26
+
+//433E6 for Asia
+//866E6 for Europe
+//915E6 for North America
+#define BAND 915E6
+
+//OLED pins
+#define OLED_SDA 4
+#define OLED_SCL 15
+#define OLED_RST 16
+#define SCREEN_WIDTH 128 // OLED display width, in pixels
+#define SCREEN_HEIGHT 32 // OLED display height, in pixels
+
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RST);
+
+String LoRaData;
+int rssi = 0;
+
+unsigned long previousMillis = 0; 
+// constants won't change:
+const long interval = 50000;
+
+void setup() {
+
+  //reset OLED display via software
+  pinMode(OLED_RST, OUTPUT);
+  digitalWrite(OLED_RST, LOW);
+  delay(20);
+  digitalWrite(OLED_RST, HIGH);
+
+  //initialize OLED
+  Wire.begin(OLED_SDA, OLED_SCL);
+  if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3c, false, false)) { // Address 0x3C for 128x32
+    Serial.println(F("SSD1306 allocation failed"));
+    for (;;); // Don't proceed, loop forever
+  }
+
+  display.clearDisplay();
+  display.setTextColor(WHITE);
+  display.setTextSize(1);
+  display.setCursor(0, 0);
+  display.print("LORA RECEIVER ");
+  display.display();
+
+  //initialize Serial Monitor
+  Serial.begin(9600);
+  SerialBT.begin("UM_Pompa");
+
+  Serial.println("LoRa Receiver Test");
+  delay(1000);
+
+  //SPI LoRa pins
+  SPI.begin(SCK, MISO, MOSI, SS);
+  //setup LoRa transceiver module
+  LoRa.setPins(SS, RST, DIO0);
+
+  if (!LoRa.begin(BAND)) {
+    Serial.println("Starting LoRa failed!");
+    while (1);
+  }
+  Serial.println("LoRa Initializing OK!");
+  display.setCursor(0, 10);
+  display.println("LoRa Initializing OK!");
+  display.display();
+  delay(2000);
+}
+
+void loop() {
+  unsigned long currentMillis = millis();
+  int packetSize = LoRa.parsePacket();
+  if (packetSize) {
+    while (LoRa.available()) {
+
+      LoRaData = LoRa.readString();
+      SerialBT.println(LoRaData);
+    }
+
+    //print RSSI of packet
+    rssi = LoRa.packetRssi();
+  }
+
+  if (rssi <= -125 || rssi == 0) {
+    display.clearDisplay();
+    display.setCursor(0, 0);
+    display.print(LoRaData);
+    display.setCursor(0, 10);
+    display.print("RSSI : ");
+    display.setCursor(40, 10);
+    display.print(rssi);
+    display.setCursor(0, 20);
+    display.print("Pompa: Mati");
+    display.display();
+    SerialBT.println("OFF+ON+OFF");
+    delay(5000);
+  } else {
+    // Dsiplay information
+    display.clearDisplay(); 
+    display.setCursor(0, 0);
+    display.print(LoRaData);
+    display.setCursor(0, 10);
+    display.print("RSSI :");
+    display.setCursor(40, 10);
+    display.print(rssi);
+    display.setCursor(0, 20);
+    display.print("Pompa: Aktif");
+    display.display();
+  }
+
+  if (currentMillis - previousMillis >= interval) {
+    // save the last time you blinked the LED
+    rssi = 0;
+    previousMillis = currentMillis;
+  }
+//  Serial.print("Current : ");
+//  Serial.println(currentMillis);
+//  Serial.print("Previous : ");
+//  Serial.println(previousMillis);
+}

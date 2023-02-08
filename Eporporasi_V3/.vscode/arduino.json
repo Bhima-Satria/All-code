@@ -1,0 +1,6 @@
+{
+    "board": "arduino:avr:uno",
+    "port": "COM8",
+    "programmer": "AVR ISP",
+    "sketch": "Eporporasi_V3.ino"
+}
